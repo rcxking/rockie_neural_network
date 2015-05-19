@@ -6,7 +6,7 @@ nntrain.py - Training script for the precached sample.
 RPI Rock Raiders
 5/18/15
 
-Last Updated: Bryant Pong: 5/18/15 - 7:43 PM     
+Last Updated: Bryant Pong: 5/18/15 - 9:35 PM     
 '''
 
 # Python Imports:
@@ -32,28 +32,25 @@ def loadData():
 	#data1 = pickle.load(open(folderName+"sample_light.dat", "rb"))
 	#data2 = pickle.load(open(folderName+"negatives.dat", "rb"))
 
+	# A list of pickle files to open:
+	fileNames = [folderName+"samplelight1.dat", folderName+"samplelight2.dat", folderName+"negatives1.dat", folderName+"negatives2.dat"] 
 
-	with open(folderName+"sample_light.dat", "rb") as f:
+	for fileName in fileNames:
 
-		data1 = pickle.load(f)
+		with open(fileName, "rb") as f:
 
-		for img in data1:
-			imgs.append(img[0])
-			if len(img[0][1]) == 0:
-				labels.append(0)
-			else:
-				labels.append(1)
+			print("Now processing: " + str(fileName))
 
-	with open(folderName+"negatives.dat", "rb") as f:
+			data = pickle.load(f)
 
-		data2 = pickle.load(f)
+			for img in data:
+				imgs.append(cv2.resize(img[0], (360, 240)))
+				if len(img[0][1]) == 0:
+					labels.append(0)
+				else:
+					labels.append(1)
 
-		for img in data2:
-			imgs.append(img[0])
-			if len(img[0][1]) == 0:
-				labels.append(0)
-			else:
-				labels.append(1)
+			print("Done processing: " + str(fileName))
 
 	return np.array(imgs).astype(theano.config.floatX), np.array(labels).astype(np.int32)
 	
