@@ -6,7 +6,7 @@ nntrain.py - Training script for the precached sample.
 RPI Rock Raiders
 5/18/15
 
-Last Updated: Bryant Pong: 5/18/15 - 9:35 PM     
+Last Updated: Bryant Pong: 5/19/15 - 10:43 PM     
 '''
 
 # Python Imports:
@@ -20,10 +20,10 @@ import warnings # For ignoring any lasagne warnings
 import cv2 # For resizing images
 
 '''
-This function loads in the training data of images.  It resizes the images
+This function dumps the training data of images into chunks.  It resizes the images
 (which are initially  
 '''
-def loadData():
+def dumpData():
 	
 	# The training images and labels:
 	imgs, labels = [], []		
@@ -33,11 +33,11 @@ def loadData():
 	#data2 = pickle.load(open(folderName+"negatives.dat", "rb"))
 
 	# A list of pickle files to open:
-	fileNames = [folderName+"samplelight1.dat", folderName+"samplelight2.dat", folderName+"negatives1.dat", folderName+"negatives2.dat"] 
+	fileNames = ["samplelight1.dat", "samplelight2.dat", "negatives1.dat", "negatives2.dat"] 
 
 	for fileName in fileNames:
 
-		with open(fileName, "rb") as f:
+		with open(folderName+fileName, "rb") as f:
 
 			print("Now processing: " + str(fileName))
 
@@ -45,14 +45,23 @@ def loadData():
 
 			for img in data:
 				imgs.append(cv2.resize(img[0], (360, 240)))
-				if len(img[0][1]) == 0:
+				if len(img[1].tolist()) == 0:
 					labels.append(0)
 				else:
 					labels.append(1)
 
 			print("Done processing: " + str(fileName))
 
-	return np.array(imgs).astype(theano.config.floatX), np.array(labels).astype(np.int32)
+	# Divide the resized data into 2 sections:
+	resizedImgs1 = pickle.dump(imgs[:len(imgs)/2], open("resizedImgs1.dat","wb"))
+	resizedImgs2 = pickle.dump(imgs[len(imgs)/2:], open("resizedImgs2.dat","wb"))
+
+	resizedLabels1 = pickle.dump(labels[:len(labels)/2], open("resizedLabels1.dat","wb"))
+	resizedLabels2 = pickle.dump(labels[len(labels)/2:], open("resizedLabels2.dat","wb"))
+
+'''
+This function loads in the training data for training the neural network.   
+'''
 	
 # Training function:
 def train():
@@ -62,7 +71,7 @@ def train():
 
 	# Load the training data of the precached sample: 
 	print("Now loading training data")
-	X, y = loadData()
+	dumpData()
 	print("Complete loading training data")
 
 	# Create the 
