@@ -6,7 +6,7 @@ nntrain.py - Training script for the precached sample.
 RPI Rock Raiders
 5/18/15
 
-Last Updated: Bryant Pong: 5/22/15 - 9:10 PM
+Last Updated: Bryant Pong: 5/23/15 - 1:54 PM
 '''
 
 # Python Imports:
@@ -18,6 +18,7 @@ import lasagne # Convolutional Neural Network Library
 import os # For open() function
 import warnings # For ignoring any lasagne warnings
 import cv2 # For resizing images
+import matplotlib.pyplot as plt
 
 '''
 This function dumps the training data of images into chunks.  It resizes the images
@@ -41,7 +42,7 @@ def dumpData():
 			data = pickle.load(f)
 
 			for img in data:
-				imgs.append(cv2.resize(img[0], (360, 240)))
+				imgs.append(cv2.resize(img[0], (128, 72)))
 				if len(img[1].tolist()) == 0:
 					labels.append(0)
 				else:
@@ -95,6 +96,11 @@ def train():
 	print("y shape: " + str(y.shape))
 	# Reshape the dataset:
 	X = X.reshape((X.shape[0], 3, 360, 240))
+
+	plt.imshow(X[0])
+	plt.show()
+
+	cv2.waitKey(0)
 	
 	print("Complete loading training data")
 
@@ -189,4 +195,6 @@ def train():
 
 # Main function runner:
 if __name__ == "__main__":
+
+	# Get the command line arguments:
 	train()
