@@ -56,21 +56,21 @@ def main():
 		shape=(None, 3, imgHeight, imgWidth))
 	l_conv1 = lasagne.layers.Conv2DLayer(
 		l_in,
-		num_filters=32,
-		filter_size=(5,5),
+		num_filters=16,
+		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_pool1 = lasagne.layers.MaxPool2DLayer(l_conv1, pool_size=(2,2))
 	l_conv2 = lasagne.layers.Conv2DLayer(
 		l_pool1, 
-		num_filters=32,
-		filter_size=(5,5),
+		num_filters=16,
+		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_pool2 = lasagne.layers.MaxPool2DLayer(l_conv2, pool_size=(2,2))
 	l_hidden1 = lasagne.layers.DenseLayer(
 		l_pool2, 
-		num_units=256,
+		num_units=128,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))		 
 	l_hidden1_dropout = lasagne.layers.DropoutLayer(l_hidden1, p=0.5)
@@ -91,9 +91,9 @@ def main():
 	get_output = theano.function([l_in.input_var], l_output.get_output(deterministic=True))
 
 	print("Now training neural net")
-	blockIdx = 50
+	blockIdx = 5
 	epoch = 1
-	epochs = 51
+	epochs = 101
 	batchIdx = 0
 	while epoch < epochs:
 		print("Epoch: " + str(epoch))
@@ -103,40 +103,25 @@ def main():
 
 		if batchIdx >= 200:
 
-			results = get_output(X[epoch-1*10:epoch-1*10+blockIdx]) 		
+			#results = get_output([X]) 		
 
-			'''
 			print("Now validating neural net")
 			numCorrect = 0 
 			for i in xrange(200):
 				predict = get_output([X[i]]) 
-				print("Predict: " + str(predict))
+				#print("Predict: " + str(predict))
 				maxArg = np.argmax(predict[0])
-				print("Max argument: " + str(maxArg))
-				print("y[i]: " + str(y[i]))
+				#print("Max argument: " + str(maxArg))
+				#print("y[i]: " + str(y[i]))
 				
 				if maxArg == y[i]:
 					numCorrect += 1
 		
 			print("Percent correct: " + str(float(numCorrect) / 200) + " for Epoch: " + str(epoch)) 
 			print("Done validating neural net")			
-			'''
+			
 			epoch += 1
 			batchIdx = 0
-
-	print("Now validating after " + str(epochs) + " epochs")
-	numCorrect = 0
-	for i in xrange(200):
-		predict = get_output([X[i]])
-		print("Predict: " + str(predict))
-		maxArg = np.argmax(predict[0])
-		print("Max argument: " + str(maxArg))
-		print("y[i]: " + str(y[i]))
-		if maxArg == y[i]:
-			numCorrect += 1
-
-	print("Percent correct: " + str(float(numCorrect) / 200) + " for Epoch: " + str(epoch))
-
 	print("All done")
 
 if __name__ == "__main__":
