@@ -14,7 +14,7 @@ import theano.tensor as T
 
 import warnings
 
-path = "/home/bryant/rockie_neural_network/data/images/"
+path = "../data/images/"
 imgs = [cv2.imread(path+img) for img in sorted(os.listdir(path))]
 
 #print("imgs: " + str(imgs))
@@ -56,21 +56,28 @@ def main():
 		shape=(None, 3, imgHeight, imgWidth))
 	l_conv1 = lasagne.layers.Conv2DLayer(
 		l_in,
-		num_filters=16,
+		num_filters=8,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_pool1 = lasagne.layers.MaxPool2DLayer(l_conv1, pool_size=(2,2))
 	l_conv2 = lasagne.layers.Conv2DLayer(
 		l_pool1, 
-		num_filters=16,
+		num_filters=12,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_pool2 = lasagne.layers.MaxPool2DLayer(l_conv2, pool_size=(2,2))
+	l_conv3 = lasagne.layers.Conv2DLayer(
+		l_pool2,
+		num_filters=16,
+		filter_size=(3,3),
+		nonlinearity=lasagne.nonlinearities.rectify,
+		W=lasagne.init.HeNormal(gain='relu'))
+	l_pool3 = lasagne.layers.MaxPool2DLayer(l_conv3, pool_size=(2,2))
 	l_hidden1 = lasagne.layers.DenseLayer(
-		l_pool2, 
-		num_units=128,
+		l_pool3, 
+		num_units=256,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))		 
 	l_hidden1_dropout = lasagne.layers.DropoutLayer(l_hidden1, p=0.5)
@@ -91,13 +98,13 @@ def main():
 	get_output = theano.function([l_in.input_var], l_output.get_output(deterministic=True))
 
 	print("Now training neural net")
-	blockIdx = 5
+	blockIdx = 50
 	epoch = 1
 	epochs = 101
 	batchIdx = 0
 	while epoch < epochs:
-		print("Epoch: " + str(epoch))
-		print("batchIdx: " + str(batchIdx))
+		#print("Epoch: " + str(epoch))
+		#print("batchIdx: " + str(batchIdx))
 		train(X[batchIdx:batchIdx+blockIdx], y[batchIdx:batchIdx+blockIdx])
 		batchIdx += blockIdx
 
