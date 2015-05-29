@@ -7,7 +7,7 @@ resizes the images, and splits the each data set into 3 sets.
 RPI Rock Raiders
 5/27/15
 
-Last Updated: Bryant Pong: 5/27/15 - 4:33 PM      
+Last Updated: Bryant Pong: 5/28/15 - 4:33 PM      
 '''
 
 # Python Imports
@@ -19,7 +19,9 @@ import cPickle as pickle
 
 dataFolder = "../data/pickle/" 
 dataNames = ["sample_shadow"]
-padding = np.zeros((80, 184, 3))
+
+deltaHeight = 224
+deltaWidth = 224
 
 # Main function:
 def main():
@@ -43,21 +45,18 @@ def main():
 
 			for i in xrange(0, midpoint):
 				nextImg = curDataset[i][0]
-				nextImg = cv2.resize(nextImg, (184, 104))	 
-				paddedImg = np.vstack([nextImg, padding]).astype(np.uint8)
-				firstHalfImgs.append(paddedImg)
+				nextImg = cv2.resize(nextImg, (deltaWidth, deltaHeight))	 
+				firstHalfImgs.append(nextImg)
 				firstHalfLabels.append(curDataset[i][1])
 			for i in xrange(midpoint, last100):
 				nextImg = curDataset[i][0]
-				nextImg = cv2.resize(nextImg, (184, 104))
-				paddedImg = np.vstack([nextImg, padding]).astype(np.uint8)
-				secondHalfImgs.append(paddedImg)
+				nextImg = cv2.resize(nextImg, (deltaWidth, deltaHeight))
+				secondHalfImgs.append(nextImg)
 				secondHalfLabels.append(curDataset[i][1])
 			for i in xrange(last100, last100+100):
 				nextImg = curDataset[i][0]
-				nextImg = cv2.resize(nextImg, (184, 104))
-				paddedImg = np.vstack([nextImg, padding]).astype(np.uint8)
-				validImgs.append(paddedImg)
+				nextImg = cv2.resize(nextImg, (deltaWidth, deltaHeight))
+				validImgs.append(nextImg)
 				validLabels.append(curDataset[i][1])
 
 			print("Now writing data")

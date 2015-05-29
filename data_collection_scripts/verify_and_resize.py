@@ -8,7 +8,7 @@ such that the resulting image is 184 x 184 px.
 RPI Rock Raiders
 5/26/15
 
-Last Updated: Bryant Pong: 5/26/15 - 4:45 PM 
+Last Updated: Bryant Pong: 5/26/15 - 4:31 PM 
 '''
 
 # Python Imports:
@@ -22,9 +22,6 @@ import matplotlib.pyplot as plt
 folder = "../data/pickle/"
 filenames = ["samplelight1.dat", "samplelight2.dat", "negatives1.dat", "negatives2.dat"]
 
-# Padding for images:
-padding = np.zeros((80,184,3))
-
 def opendata():
 	
 	imgs = []
@@ -36,9 +33,8 @@ def opendata():
 
 			for dataTuple in nextData:
 				 nextImg = dataTuple[0]
-				 nextImg = cv2.resize(nextImg, (184, 104))
-				 stackedImg = np.vstack([nextImg, padding])
-				 imgs.append(stackedImg.astype(np.uint8))
+				 nextImg = cv2.resize(nextImg, (224, 224))
+				 imgs.append(nextImg)
 				 labels.append(dataTuple[1])			 	 			
 
 	return imgs, labels
