@@ -7,7 +7,7 @@ sample.
 RPI Rock Raiders
 5/27/15
 
-Last Updated: Bryant Pong: 5/28/15 - 9:24 PM
+Last Updated: Bryant Pong: 5/31/15 - 12:09 PM
 '''
 
 import lasagne
@@ -106,7 +106,7 @@ def train():
 		shape=(None, 3, imgHeight, imgWidth))
 	l_conv1 = lasagne.layers.Conv2DLayer(
 		l_in,
-		num_filters=96,
+		num_filters=24,
 		filter_size=(11,11),
 		stride=4,
 		nonlinearity=lasagne.nonlinearities.rectify,
@@ -114,56 +114,44 @@ def train():
 	l_pool1 = lasagne.layers.MaxPool2DLayer(l_conv1, pool_size=(2,2))
 	l_conv2 = lasagne.layers.Conv2DLayer(
 		l_pool1,
-		num_filters=256,
+		num_filters=64,
 		filter_size=(5,5),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))	
 	l_pool2 = lasagne.layers.MaxPool2DLayer(l_conv2, pool_size=(2,2))
 	l_conv3 = lasagne.layers.Conv2DLayer(
 		l_pool2,
-		num_filters=384,
+		num_filters=96,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_conv4 = lasagne.layers.Conv2DLayer(
 		l_conv3,
-		num_filters=384,
+		num_filters=96,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_conv5 = lasagne.layers.Conv2DLayer(
 		l_conv4, 
-		num_filters=256,
+		num_filters=64,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_pool3 = lasagne.layers.MaxPool2DLayer(l_conv5, pool_size=(2,2))
 	l_hidden1 = lasagne.layers.DenseLayer(
 		l_pool3,
-		num_units=256,
+		num_units=64,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_hidden2 = lasagne.layers.DenseLayer(
 		l_hidden1,
-		num_units=256,
+		num_units=64,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_output = lasagne.layers.DenseLayer(
 		l_hidden2,
 		num_units=2,
 		nonlinearity=lasagne.nonlinearities.softmax)
-	'''
-	l_hidden1 = lasagne.layers.DenseLayer(
-		l_pool6, 
-		num_units=512,
-		nonlinearity=lasagne.nonlinearities.rectify,
-		W=lasagne.init.HeNormal(gain='relu'))		 
-	l_hidden1_dropout = lasagne.layers.DropoutLayer(l_hidden1, p=0.5)
-	l_output = lasagne.layers.DenseLayer(
-		l_hidden1_dropout,
-		num_units=2,
-		nonlinearity=lasagne.nonlinearities.softmax)
-	'''
 	true_output = T.ivector('true_output')
 	objective = lasagne.objectives.Objective(l_output,
 			loss_function=lasagne.objectives.categorical_crossentropy)
