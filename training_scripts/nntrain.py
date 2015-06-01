@@ -7,7 +7,7 @@ sample.
 RPI Rock Raiders
 5/27/15
 
-Last Updated: Bryant Pong: 5/31/15 - 12:09 PM
+Last Updated: Bryant Pong: 6/1/15 - 5:19 PM
 '''
 
 import lasagne
@@ -66,6 +66,17 @@ def loadValidationData():
 
 	return np.array(X), np.array(y)
 
+'''
+This function calculates the training loss for a given Epoch.
+'''
+def calcTrainingLoss(epochParams, batchSize, totalSamples):
+
+	numBatches = int(totalSamples / batchSize)
+
+	#for b in xrange(
+
+	
+
 def train():
 
 	# Suppress warnings from lasagne
@@ -106,7 +117,7 @@ def train():
 		shape=(None, 3, imgHeight, imgWidth))
 	l_conv1 = lasagne.layers.Conv2DLayer(
 		l_in,
-		num_filters=24,
+		num_filters=32,
 		filter_size=(11,11),
 		stride=4,
 		nonlinearity=lasagne.nonlinearities.rectify,
@@ -114,42 +125,44 @@ def train():
 	l_pool1 = lasagne.layers.MaxPool2DLayer(l_conv1, pool_size=(2,2))
 	l_conv2 = lasagne.layers.Conv2DLayer(
 		l_pool1,
-		num_filters=64,
+		num_filters=72,
 		filter_size=(5,5),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))	
 	l_pool2 = lasagne.layers.MaxPool2DLayer(l_conv2, pool_size=(2,2))
 	l_conv3 = lasagne.layers.Conv2DLayer(
 		l_pool2,
-		num_filters=96,
+		num_filters=104,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_conv4 = lasagne.layers.Conv2DLayer(
 		l_conv3,
-		num_filters=96,
+		num_filters=104,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_conv5 = lasagne.layers.Conv2DLayer(
 		l_conv4, 
-		num_filters=64,
+		num_filters=72,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_pool3 = lasagne.layers.MaxPool2DLayer(l_conv5, pool_size=(2,2))
 	l_hidden1 = lasagne.layers.DenseLayer(
 		l_pool3,
-		num_units=64,
+		num_units=72,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
+	l_dropout1 = lasagne.layers.DropoutLayer(l_hidden1, p=0.5)
 	l_hidden2 = lasagne.layers.DenseLayer(
-		l_hidden1,
-		num_units=64,
+		l_dropout1,
+		num_units=72,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
+	l_dropout2 = lasagne.layers.DropoutLayer(l_hidden2, p=0.5)
 	l_output = lasagne.layers.DenseLayer(
-		l_hidden2,
+		l_dropout2,
 		num_units=2,
 		nonlinearity=lasagne.nonlinearities.softmax)
 	true_output = T.ivector('true_output')
@@ -164,10 +177,23 @@ def train():
 	
 	get_output = theano.function([l_in.input_var], l_output.get_output(deterministic=True))
 
+	# Display the number of parameters that this neural network has:
+	final_params = lasagne.layers.get_all_param_values(l_output)
+	numParams = 0
+	print("params: " + str(final_params))
+	for p in final_params:
+		print("type of p: " + str(type(p)))
+		print(p)
+		numParams += len(p.flatten())
+
+	print("number of parameters: " + str(numParams))
+	#return
+
 	print("Now training neural net")
 	blockIdx = 100
 	epoch = 1
-	epochs = 100
+	epochs = 26
+	xAxis, yAxis = [], []
 	batchIdx = 0
 	output = []
 	highestAccuracy = 0.0
@@ -202,11 +228,21 @@ def train():
 			if float(numCorrect) / validX.shape[0] > highestAccuracy:
 				print("This Epoch has the highest accuracy!")
 				highestAccuracy = float(numCorrect) / validX.shape[0]
-				output = lasagne.layers.get_all_params(l_output)
+				output = lasagne.layers.get_all_param_values(l_output)
 
-	pickle.dump(output, open("output.dat", "wb"))
-	pickle.dump(highestAccuracy, open("highestAccuracy", "wb"))
+				pickle.dump(output, open("output.dat", "wb"))
+				pickle.dump(highestAccuracy, open("highestAccuracy", "wb"))
+
+			xAxis.append(epoch)
+			yAxis.append(float(numCorrect) / validX.shape[0])	
+
+			# Plot the validation loss:
+			#plt.plot(xAxis, yAxis)
+			#plt.show()	 
+
 	print("Highest accuracy produced: " + str(highestAccuracy))
+	plt.plot(xAxis, yAxis)
+	plt.show()
 	print("All done")
 
 if __name__ == "__main__":
