@@ -7,7 +7,7 @@ sample.
 RPI Rock Raiders
 5/27/15
 
-Last Updated: Bryant Pong: 6/1/15 - 5:19 PM
+Last Updated: Bryant Pong: 6/3/15 - 12:55 PM
 '''
 
 import lasagne
@@ -36,6 +36,8 @@ def loadData():
 	for imgSet in imgNames:
 		with open(path+imgSet, "rb") as f:
 			for i in pickle.load(f):
+				#plt.imshow(i)
+				#plt.show()
 				resizedImg = i.reshape(3, imgHeight, imgWidth) 
 				X.append(resizedImg)
 	for label in labelNames:
@@ -117,47 +119,56 @@ def train():
 		shape=(None, 3, imgHeight, imgWidth))
 	l_conv1 = lasagne.layers.Conv2DLayer(
 		l_in,
-		num_filters=32,
+		num_filters=24,
 		filter_size=(11,11),
 		stride=4,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
-	l_pool1 = lasagne.layers.MaxPool2DLayer(l_conv1, pool_size=(2,2))
+	l_pool1 = lasagne.layers.MaxPool2DLayer(
+		l_conv1, 
+		pool_size=(3,3),
+		stride=2)
 	l_conv2 = lasagne.layers.Conv2DLayer(
 		l_pool1,
-		num_filters=72,
+		num_filters=64,
 		filter_size=(5,5),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))	
-	l_pool2 = lasagne.layers.MaxPool2DLayer(l_conv2, pool_size=(2,2))
+	l_pool2 = lasagne.layers.MaxPool2DLayer(
+		l_conv2, 
+		pool_size=(3,3),
+		stride=2)
 	l_conv3 = lasagne.layers.Conv2DLayer(
 		l_pool2,
-		num_filters=104,
+		num_filters=96,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_conv4 = lasagne.layers.Conv2DLayer(
 		l_conv3,
-		num_filters=104,
+		num_filters=96,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_conv5 = lasagne.layers.Conv2DLayer(
 		l_conv4, 
-		num_filters=72,
+		num_filters=64,
 		filter_size=(3,3),
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
-	l_pool3 = lasagne.layers.MaxPool2DLayer(l_conv5, pool_size=(2,2))
+	l_pool3 = lasagne.layers.MaxPool2DLayer(
+		l_conv5, 
+		pool_size=(3,3),
+		stride=2)
 	l_hidden1 = lasagne.layers.DenseLayer(
 		l_pool3,
-		num_units=72,
+		num_units=256,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_dropout1 = lasagne.layers.DropoutLayer(l_hidden1, p=0.5)
 	l_hidden2 = lasagne.layers.DenseLayer(
 		l_dropout1,
-		num_units=72,
+		num_units=256,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_dropout2 = lasagne.layers.DropoutLayer(l_hidden2, p=0.5)
