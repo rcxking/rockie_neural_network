@@ -181,18 +181,18 @@ def train():
 	l_dropout2 = lasagne.layers.DropoutLayer(l_hidden2, p=0.5)
 	l_output = lasagne.layers.DenseLayer(
 		l_dropout2,
-		num_units=2,
-		nonlinearity=lasagne.nonlinearities.softmax)
-	true_output = T.ivector('true_output')
+		num_units=1,
+		nonlinearity=lasagne.nonlinearities.sigmoid)
+	true_output = T.iscalar('true_output')
 	objective = lasagne.objectives.Objective(l_output,
-			loss_function=lasagne.objectives.categorical_crossentropy)
+			loss_function=lasagne.objectives.binary_crossentropy)
 	loss_train = objective.get_loss(target=true_output, deterministic=False)
 	loss_eval = objective.get_loss(target=true_output, deterministic=True)
 
 	all_params = lasagne.layers.get_all_params(l_output)
 	#updates = lasagne.updates.adadelta(loss_train, all_params)
 	updates = lasagne.updates.nesterov_momentum(
-		loss_train, all_params, 0.0005, 0.9)
+		loss_train, all_params, 0.01, 0.9)
 	train = theano.function([l_in.input_var, true_output], loss_train, updates=updates)
 	
 	get_output = theano.function([l_in.input_var], l_output.get_output(deterministic=True))
@@ -212,7 +212,7 @@ def train():
 	'''
 
 	# Variables for the neural network:
-	blockIdx = 10
+	blockIdx = 1
 	epoch = 1
 	epochs = 4
 	xAxis, yAxis = [], []
@@ -268,7 +268,7 @@ def train():
 				for validItr in xrange(validX.shape[0]):
 					predict = get_output([validX[validItr]]) 
 					print("Predict: " + str(validItr) + " " + str(predict))
-					maxArg = np.argmax(predict[0])
+					maxArg = np.max(predict)
 					print("Max argument: " + str(maxArg))
 					#plt.imshow(validX[validItr].reshape(imgHeight, imgWidth, 3))
 					#plt.show()
