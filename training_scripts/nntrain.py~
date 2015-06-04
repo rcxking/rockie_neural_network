@@ -227,7 +227,7 @@ def create_iter_functions(dataset, output_layer, X_tensor_type=T.tensor4,
 	loss_eval = objective.get_loss(X_batch, target=y_batch, deterministic=True)
 
 	# Prediction function:
-	pred = T.round(lasagne.layers.get_output(output_layer, X_batch, deterministic=True),
+	pred = T.argmax(lasagne.layers.get_output(output_layer, X_batch, deterministic=True),
 	axis=1)
 
 	accuracy = T.mean(T.eq(pred, y_batch), dtype=theano.config.floatX)
