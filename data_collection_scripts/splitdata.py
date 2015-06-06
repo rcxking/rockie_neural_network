@@ -7,7 +7,7 @@ resizes the images, and splits the each data set into 3 sets.
 RPI Rock Raiders
 5/27/15
 
-Last Updated: Bryant Pong: 5/28/15 - 4:33 PM      
+Last Updated: Bryant Pong: 6/5/15 - 4:51 PM      
 '''
 
 # Python Imports
@@ -18,10 +18,10 @@ import os
 import cPickle as pickle
 
 dataFolder = "../data/pickle/" 
-dataNames = ["sample_shadow"]
+dataNames = ["sample_light", "sample_shadow", "negatives"]
 
-deltaHeight = 224
-deltaWidth = 224
+deltaHeight = 112
+deltaWidth = 112
 
 # Main function:
 def main():
@@ -37,7 +37,6 @@ def main():
 			'''
 			print("Now processing " + str(filename)+".dat")
 			firstHalfImgs, secondHalfImgs, validImgs = [], [], [] 
-			firstHalfLabels, secondHalfLabels, validLabels = [], [], []
 
 			curDataset = pickle.load(f)
 			last100 = len(curDataset) - 100	  		
@@ -47,26 +46,19 @@ def main():
 				nextImg = curDataset[i][0]
 				nextImg = cv2.resize(nextImg, (deltaWidth, deltaHeight))	 
 				firstHalfImgs.append(nextImg)
-				firstHalfLabels.append(curDataset[i][1])
 			for i in xrange(midpoint, last100):
 				nextImg = curDataset[i][0]
 				nextImg = cv2.resize(nextImg, (deltaWidth, deltaHeight))
 				secondHalfImgs.append(nextImg)
-				secondHalfLabels.append(curDataset[i][1])
 			for i in xrange(last100, last100+100):
 				nextImg = curDataset[i][0]
 				nextImg = cv2.resize(nextImg, (deltaWidth, deltaHeight))
 				validImgs.append(nextImg)
-				validLabels.append(curDataset[i][1])
 
 			print("Now writing data")
 			pickle.dump(firstHalfImgs, open(filename+"Imgs1.dat", "wb"))
 			pickle.dump(secondHalfImgs, open(filename+"Imgs2.dat", "wb"))
 			pickle.dump(validImgs, open(filename+"valid.dat", "wb"))
-			pickle.dump(firstHalfLabels, open(filename+"Labels1.dat", "wb"))
-			pickle.dump(secondHalfLabels, open(filename+"Labels2.dat", "wb"))
-			pickle.dump(validLabels, open(filename+"validLabels.dat", "wb"))
-
 				
 	print("All done")
 
