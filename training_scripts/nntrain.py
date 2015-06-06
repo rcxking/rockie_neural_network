@@ -39,7 +39,7 @@ imgHeight = 112
 BATCH_SIZE = 100
 LEARNING_RATE = 0.00001
 MOMENTUM = 0.9
-NUM_EPOCHS = 3
+NUM_EPOCHS = 200
 
 def loadData():
 	X, y = [], []
@@ -118,7 +118,7 @@ of the ImageNet Architecture.  The model is as follows:
 def build_model(batch_size=BATCH_SIZE):
 	print("Now creating Neural Network")
 	l_in = lasagne.layers.InputLayer(
-		shape=(batch_size, 1, 112, 112))
+		shape=(None, 1, 112, 112))
 	l_conv1 = lasagne.layers.Conv2DLayer(
 		l_in,
 		num_filters=48,
@@ -294,6 +294,12 @@ def main(num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, learning_rate=LEARNING_RA
 	# Begin training:	
 	print("Now beginning training of neural network: ") 
 	now = time.time()
+
+	'''
+	These variables keep track of the lowest validation loss.      
+	'''
+	lowestValidationLoss = 9001.0
+
 	try:
 		for epoch in train(iter_funcs, dataset):
 			print("Epoch {} of {} tok {:.3f}s".format(
@@ -302,7 +308,14 @@ def main(num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, learning_rate=LEARNING_RA
 			print("  training loss:\t\t{:.6f}".format(epoch['train_loss']))	
 			print("  validation loss:\t\t{:.6f}".format(epoch['valid_loss']))
 			print("  validation accuracy:\t\t{:.2f} %%".format(epoch['valid_accuracy'] * 100))
-			if epoch['number'] >= num_epochs:
+
+			if float(epoch['valid_loss']) < lowestValidationLoss:
+				print("This is our lowest validation loss!")
+				best_params = lasagne.layers.get_all_param_values(output_layer)	 
+				pickle.dump(best_params, open("best_params.pkl", "wb"))
+				pickle.dump(lowestValidationLoss, open("lowestValidationLoss.pkl", "wb"))
+
+			if epoch['number'] >= num_epochs or float(epoch['valid_loss']) > lowestValidationLoss:
 				break
 	except KeyboardInterrupt:
 		pass
