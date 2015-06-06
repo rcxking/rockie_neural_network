@@ -7,7 +7,7 @@ sample.
 RPI Rock Raiders
 5/27/15
 
-Last Updated: Bryant Pong: 6/5/15 - 9:19 PM
+Last Updated: Bryant Pong: 6/4/15 - 5:22 PM
 '''
 
 import lasagne
@@ -36,8 +36,8 @@ validImgs = ["negativesvalid.dat", "sample_lightvalid.dat", "sample_shadowvalid.
 validLabels = ["negativesvalidLabels.dat", "sample_lightvalidLabels.dat", "sample_shadowvalidLabels.dat"]
 imgWidth = 112
 imgHeight = 112
-BATCH_SIZE = 100
-LEARNING_RATE = 0.00001
+BATCH_SIZE = 10
+LEARNING_RATE = 0.01
 MOMENTUM = 0.9
 NUM_EPOCHS = 3
 
@@ -50,8 +50,7 @@ def loadData():
 			for i in pickle.load(f):
 				#plt.imshow(i)
 				#plt.show()
-				#resizedImg = i.reshape(3, imgHeight, imgWidth)
-				resizedImg = cv2.cvtColor(i, cv2.COLOR_BGR2GRAY).reshape(1, imgHeight, imgWidth)
+				resizedImg = i.reshape(3, imgHeight, imgWidth) 
 				X.append(resizedImg)
 	for label in labelNames:
 		with open(path+label, "rb") as f:
@@ -69,8 +68,7 @@ def loadValidationData():
 	for imgSet in validImgs:
 		with open(path+imgSet, "rb") as f:
 			for i in pickle.load(f):
-				#resizedImg = i.reshape(3, imgHeight, imgWidth)
-				resizedImg = cv2.cvtColor(i, cv2.COLOR_BGR2GRAY).reshape(1, imgHeight, imgWidth)
+				resizedImg = i.reshape(3, imgHeight, imgWidth)
 				X.append(resizedImg)
 	for label in validLabels:
 		with open(path+label, "rb") as f:
@@ -96,9 +94,6 @@ def loadGlobalData():
 	X_valid, y_valid = loadValidationData()
 	print("Done loading validation data.")
 
-	print("X_train.shape: " + str(X_train.shape))
-	print("X_valid.shape: " + str(X_valid.shape))
-
 	return dict(
 		X_train = theano.tensor._shared(lasagne.utils.floatX(X_train)),
 		y_train = T.cast(theano.tensor._shared(y_train), 'int32'),
@@ -115,15 +110,15 @@ def loadGlobalData():
 This function constructs a neural network model that closely replicates that 
 of the ImageNet Architecture.  The model is as follows:
 '''
-def build_model(batch_size=BATCH_SIZE):
+def build_model():
 	print("Now creating Neural Network")
 	l_in = lasagne.layers.InputLayer(
-		shape=(batch_size, 1, 112, 112))
+		shape=(None, 3, imgHeight, imgWidth))
 	l_conv1 = lasagne.layers.Conv2DLayer(
 		l_in,
-		num_filters=48,
-		filter_size=(5,5),
-		stride=2,
+		num_filters=24,
+		filter_size=(11,11),
+		stride=4,
 		nonlinearity=lasagne.nonlinearities.rectify,
 		W=lasagne.init.HeNormal(gain='relu'))
 	l_pool1 = lasagne.layers.MaxPool2DLayer(
@@ -182,7 +177,7 @@ def build_model(batch_size=BATCH_SIZE):
 	print("Successfully created neural network")
 	return l_output
 
-def create_iter_functions(dataset, output_layer, X_tensor_type=T.ftensor4,
+def create_iter_functions(dataset, output_layer, X_tensor_type=T.tensor4,
                           batch_size=BATCH_SIZE,
 						  learning_rate=LEARNING_RATE,
 						  momentum=MOMENTUM):
@@ -230,7 +225,7 @@ def create_iter_functions(dataset, output_layer, X_tensor_type=T.ftensor4,
 	)
 
 	return dict(
-	    train=iter_train,
+	    	train=iter_train,
 		valid=iter_valid,
 		test=iter_test,
 	)		
@@ -286,26 +281,77 @@ def main(num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, learning_rate=LEARNING_RA
 	print("Now loading all data")
 	dataset = loadGlobalData()
 	print("Done loading all data")
+	return
+	# Load the validation data:
+	print("Now loading validation data")
+	validX, validY = loadValidationData()  	 
+	validX = validX.astype(theano.config.floatX)
+	validY = validY.astype(np.int32)
+	 
+	print("Done loading validation data")
 
-	print("Now creating iterator functions")
-	iter_funcs = create_iter_functions(dataset, output_layer) 
 	print("Successfully created iterator functions")
 
-	# Begin training:	
-	print("Now beginning training of neural network: ") 
-	now = time.time()
-	try:
-		for epoch in train(iter_funcs, dataset):
-			print("Epoch {} of {} tok {:.3f}s".format(
-				epoch['number'], num_epochs, time.time() - now))
-			now = time.time()
-			print("  training loss:\t\t{:.6f}".format(epoch['train_loss']))	
-			print("  validation loss:\t\t{:.6f}".format(epoch['valid_loss']))
-			print("  validation accuracy:\t\t{:.2f} %%".format(epoch['valid_accuracy'] * 100))
-			if epoch['number'] >= num_epochs:
-				break
-	except KeyboardInterrupt:
-		pass
+	for i in xrange(len(imgNames)):
+
+		X, y = [], []
+
+		print("Now opening image set: " + str(imgNames[i]) + " and image labels: " + str(labelNames[i]))  
+
+		with open(path+imgNames[i], "rb") as dataX, open(path+labelNames[i], "rb") as dataY:
+			
+			for imgItr in pickle.load(dataX):
+				X.append(imgItr.reshape(3, imgHeight, imgWidth))
+
+			for lblItr in pickle.load(dataY):
+				if len(lblItr) > 0:
+					y.append(1)
+				else:
+					y.append(0)
+
+		# Typecast the next set of training data and labels:
+		X = np.array(X)
+		y = np.array(y)
+
+		print("X size: " + str(X.shape[0]))
+		print("y size: " + str(y.shape[0]))
+		
+		# Construct the dataset and iterator functions: 
+		dataset = dict(
+			# Need to cast all data with float32 for images and int32 for labels 
+			X_train = theano.tensor._shared(lasagne.utils.floatX(X)),
+			y_train = T.cast(theano.tensor._shared(y), 'int32'),
+			X_valid = theano.tensor._shared(lasagne.utils.floatX(validX)),
+			y_valid = T.cast(theano.tensor._shared(validY), 'int32'),
+			X_test = theano.tensor._shared(lasagne.utils.floatX(validX)),
+			y_test = T.cast(theano.tensor._shared(validY), 'int32'),
+			num_examples_train = X.shape[0],
+			num_examples_valid = validX.shape[0],
+			num_examples_test = validX.shape[0],
+		)
+
+		print("Done loading data")
+		#iter_funcs = create_iter_functions(dataset, output_layer)	
+
+		print("Now creating iterator functions")
+		
+
+		# Begin training:
+	
+		print("Now beginning training of neural network: ") 
+		now = time.time()
+		try:
+			for epoch in train(iter_funcs, dataset):
+				print("Epoch {} of {} tok {:.3f}s".format(
+					epoch['number'], num_epochs, time.time() - now))
+				now = time.time()
+				print("  training loss:\t\t{:.6f}".format(epoch['train_loss']))	
+				print("  validation loss:\t\t{:.6f}".format(epoch['valid_loss']))
+				print("  validation accuracy:\t\t{:.2f} %%".format(epoch['valid_accuracy'] * 100))
+				if epoch['number'] >= num_epochs:
+					break
+		except KeyboardInterrupt:
+			pass
 
 	return output_layer
 
