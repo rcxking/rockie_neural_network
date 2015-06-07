@@ -7,7 +7,7 @@ to recognize the precached sample for Phase 1.
 RPI Rock Raiders
 5/6/15
 
-Last Updated: Bryant Pong: 5/6/15 - 11:03 PM
+Last Updated: Bryant Pong: 5/7/15 - 2:30 PM
 '''
 
 # Python Imports
@@ -15,18 +15,16 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.svm as svm
+from sklearn.metrics import confusion_matrix
 import cPickle as pickle
 import os
 import gc
 
 # Globals:
 dataFolder = "../data/pickle/"
-imgNames = ["negativesImgs1_flipped.dat", "sample_lightImgs1_flipped.dat", "sample_shadowImgs1_flipped.dat", \
-"negativesImgs2.dat", "sample_lightImgs2.dat", "sample_shadowImgs2.dat", \
-"negativesImgs2_flipped.dat", "sample_lightImgs2_flipped.dat", "sample_shadowImgs2_flipped.dat"]
-
-lblNames = ["negativesLabels1.dat", "sample_lightLabels1.dat", "sample_shadowLabels1.dat", \
-"negativesLabels2.dat", "sample_lightLabels2.dat", "sample_shadowLabels2.dat", \
+imgNames = ["sample_shadowImgs1.dat", \
+"negativesImgs2.dat", "sample_lightImgs2.dat", "sample_shadowImgs2.dat"]
+lblNames = ["sample_shadowLabels1.dat", \
 "negativesLabels2.dat", "sample_lightLabels2.dat", "sample_shadowLabels2.dat"]
 
 '''
@@ -111,18 +109,16 @@ def loadData():
 
 				print("Now operating on image: " + str(counter) + " out of: " + str(len(imgs)))				
 				# Display the images:
-				#plt.imshow(imgs[counter])  
-				#plt.show()
+				plt.imshow(imgs[counter])  
+				plt.show()
 
 				# Run the sliding windowing algorithm.  Need to rescale the labels by a factor of 2.
 				newWindows, newLabels = slidingWindow(imgs[counter], labels[counter]/2, 160, 160)
 
-				'''
 				for temp in xrange(len(newWindows)):
 					print(newLabels[temp])
 					plt.imshow(newWindows[temp])
 					plt.show()
-				'''
 
 				# Calculate the descriptors:
 				for imgCounter in xrange(len(newWindows)): 
@@ -168,16 +164,117 @@ def calcDescriptor(img):
 
 	return histogram.flatten()
 
+# Training function:
+def train(images, labels):
+
+	print("type of labels: " + str(type(labels)))
+	print("labels: " + str(labels))
+
+	tempImgs = [i.tolist() for i in images]
+
+	# Create the LinearSVM object:
+	clf = svm.LinearSVC(C=1.0)
+
+	X = np.array(tempImgs)
+
+	# Begin classification:
+
+	print("Now training support vector machine") 
+	clf.fit(X, labels)
+	print("Done training support vector machine")
+
+	return clf
+
+def loadTrainingData():
+	trainFolder = "../data/svm_pickle/"
+	trainImgs = ["lightImgs1Des", "lightImgs2Des", \
+	"negImgs1Des", "negImgs2Des", \
+	"shadImgs1Des", "shadImgs2Des"]
+	trainLbls = ["lightImgs1Lbls", "lightImgs2Lbls", \
+	"negImgs1Lbls", "negImgs2Lbls", \
+	"shadImgs1Lbls", "shadImgs2Lbls"]
+
+	allX, allY = [], []
+
+	for i in xrange(len(trainImgs)):
+
+		with open(trainFolder+trainImgs[i]+".pkl", "rb") as X, \
+		     open(trainFolder+trainLbls[i]+".pkl", "rb") as y:
+			
+			allX.extend(pickle.load(X))
+			allY.extend(pickle.load(y))
+
+		gc.collect()
+
+	return allX, allY
 # Main function.  Select either "train" or "predict"   
 def main(action):
 
-	if action == "train":
+	if action == "getdata":
 		# Train the support vector machine
 		print("Now training support vector machine")	
 
 		# Load the training images and labels:  
 		print("Now loading training images and labels")
-		X, y = loadData() 
+		X, y = loadData()
+	elif action == "train":
+		print("Now training support vector machine")
+		
+		# Load the training images and labels:
+		print("Now loading training images and labels")		 
+		X, y = loadTrainingData()
+		print("Done loading training images and labels")
+
+		print("Now training SVM")
+		SVM = train(X, y)
+		print("Done training SVM")
+		print("Now dumping SVM:")
+		pickle.dump(SVM, open("SVM.pkl", "wb"))
+		print("Done dumping SVM")
+
+		print("All done")
+	else:
+		print("Now validating Support Vector Machine")
+
+		print("Now loading SVM")
+		svm = pickle.load(open("SVM.pkl", "rb")) 
+		print("Done loading SVM.  Now loading validation images")
+		sampleLight = pickle.load(open("../data/pickle/sample_lightImgs1.dat", "rb"))
+		print("Done loading validation images.  Now loading labels") 
+		sampleLightLabels = pickle.load(open("../data/pickle/sample_lightLabels1.dat"))
+		print("Beginning validation")
+
+		numCorrect = 0	
+		counter = 0
+		y_pred = []
+		y_act = []
+		for temp in sampleLight[:50]:
+	
+				
+			#plt.imshow(temp)
+			#plt.show()
+
+			# Run the sliding window algorithm:
+			slidingWindows, newLabels = slidingWindow(temp, sampleLightLabels[counter]/2, 160, 160)
+			for i in xrange(len(slidingWindows)):
+				testDes = calcDescriptor(slidingWindows[i])
+				print("Prediction: " + str(svm.predict(testDes)[0]))
+				#print("sampleLightLabel[counter]: " + str(sampleLightLabels[counter]))
+				y_pred.append(svm.predict(testDes)[0])
+				y_act.append(newLabels[i])
+				if svm.predict(testDes)[0] == newLabels[i]:
+					numCorrect += 1
+				
+
+				#plt.imshow(slidingWindows[i])
+				#plt.show()
+			counter += 1
+
+		cMatrix = confusion_matrix(y_act, y_pred)
+		print("Accuracy: " + str(float(numCorrect) / (50*12)))
+		print("Confusion Matrix: " + str(cMatrix))
+		print("All done")
 
 if __name__ == "__main__":
 	main("train")
+	main("validate")
