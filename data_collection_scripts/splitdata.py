@@ -18,10 +18,10 @@ import os
 import cPickle as pickle
 
 dataFolder = "../data/pickle/" 
-dataNames = ["sample_light", "sample_shadow", "negatives"]
+dataNames = ["sample_light"]
 
-deltaHeight = 112
-deltaWidth = 112
+deltaHeight = 480
+deltaWidth = 640
 
 # Main function:
 def main():
